@@ -312,6 +312,17 @@ pub fn switch_permission(id: i32, name: String, enabled: bool) {
     };
 }
 
+#[inline]
+#[cfg(target_os = "android")]
+pub fn switch_permission_all(name: String, enabled: bool) {
+    for (_, client) in CLIENTS.read().unwrap().iter() {
+        allow_err!(client.tx.send(Data::SwitchPermission {
+            name: name.clone(),
+            enabled
+        }));
+    }
+}
+
 #[cfg(any(target_os = "android", target_os = "ios", feature = "flutter"))]
 #[inline]
 pub fn get_clients_state() -> String {
@@ -512,6 +523,7 @@ impl<T: InvokeUiCM> IpcTaskRunner<T> {
                                                     width: c.width,
                                                     height: c.height,
                                                     format: c.format.value(),
+                                                    special_name: c.special_name,
                                                 });
                                             }
                                             allow_err!(self.stream.send(&Data::ClipboardNonFile(Some(("".to_owned(), main_data)))).await);
